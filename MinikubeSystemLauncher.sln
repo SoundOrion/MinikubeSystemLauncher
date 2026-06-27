@@ -1,0 +1,27 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemMinikubeHost", "src\SystemMinikubeHost\SystemMinikubeHost.csproj", "{9ED66E9A-9B66-4C66-A0E7-02E7F0E77D54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserKubeClient", "src\UserKubeClient\UserKubeClient.csproj", "{A5F7F4B8-3B38-4A74-A73B-CF361CDBB6C8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9ED66E9A-9B66-4C66-A0E7-02E7F0E77D54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9ED66E9A-9B66-4C66-A0E7-02E7F0E77D54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9ED66E9A-9B66-4C66-A0E7-02E7F0E77D54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9ED66E9A-9B66-4C66-A0E7-02E7F0E77D54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5F7F4B8-3B38-4A74-A73B-CF361CDBB6C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5F7F4B8-3B38-4A74-A73B-CF361CDBB6C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5F7F4B8-3B38-4A74-A73B-CF361CDBB6C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5F7F4B8-3B38-4A74-A73B-CF361CDBB6C8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
