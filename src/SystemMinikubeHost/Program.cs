@@ -683,6 +683,17 @@ namespace SystemMinikubeHost
             return rc1 != 0 ? rc1 : rc2;
         }
 
+        private static int DisableHyperV()
+        {
+            if (!CanRunElevatedJob("Hyper-V 無効化")) return 100;
+
+            Console.WriteLine("Hyper-V 無効化コマンドを実行します。再起動が必要になる場合があります。");
+            int rc1 = RunCmd(@"DISM /Online /Disable-Feature /FeatureName:Microsoft-Hyper-V-All /NoRestart", null);
+            int rc2 = RunCmd(@"bcdedit /set hypervisorlaunchtype off", null);
+            Console.WriteLine("完了。必要に応じて Windows を再起動してください。");
+            return rc1 != 0 ? rc1 : rc2;
+        }
+
         private static int AddonsList()
         {
             if (!CanRunElevatedJob("addon一覧")) return 100;
