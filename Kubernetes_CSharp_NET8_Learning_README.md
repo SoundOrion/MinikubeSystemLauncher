@@ -1066,7 +1066,78 @@ minikube delete --profile=minikube
 
 ---
 
-## 22. まとめ
+
+## 22. 補足: MinikubeSystemLauncher を使って実行できること
+
+この README の学習フローは、別途作成した `MinikubeSystemLauncher` を使って進めることもできます。
+`SystemMinikubeHost` は minikube 側の操作、`UserKubeClient` は起動済み Kubernetes を使う操作、という分担にすると分かりやすいです。
+
+```text
+SystemMinikubeHost
+  minikube の起動 / 停止 / 削除
+  driver の指定
+  addon 有効化
+  dashboard URL 表示
+  コンテナイメージの build / load / ls / rm
+  kubeconfig 出力
+
+UserKubeClient
+  kubectl で状態確認
+  YAML apply / delete
+  Pod logs / describe
+  port-forward
+  helm 操作
+  k9s 起動
+```
+
+README の各ステップとの対応は次の通りです。
+
+| 学習フロー | MinikubeSystemLauncher で使うもの |
+| --- | --- |
+| minikube を起動する | `SystemMinikubeHost` の `起動` |
+| node / pod / service を確認する | `UserKubeClient` の `状態確認` / `Pod一覧` / `Service一覧` |
+| C# コンソールアプリを Job で動かす | サンプルのイメージ作成後、`UserKubeClient` の `YAML適用` |
+| Blazor Server / Web API を動かす | イメージ作成後、`YAML適用` と `port-forward` |
+| ConfigMap / Secret を試す | YAML を作成して `UserKubeClient` の `YAML適用` |
+| Ingress を試す | `SystemMinikubeHost` の `ingress addon有効化` と `YAML適用` |
+| PostgreSQL + PVC を試す | YAML または Helm を使って `UserKubeClient` から適用 |
+| Helm を使う | `UserKubeClient` の `helm 任意コマンド` |
+| k9s で見る | `UserKubeClient` の `k9s 起動` |
+| Dashboard で見る | `SystemMinikubeHost` の `dashboard URL表示` |
+
+すでに用意しているサンプルがある場合は、次の範囲はそのまま進められます。
+
+```text
+できること
+  minikube 起動 / 停止 / 削除
+  addon 有効化
+  Dashboard 表示
+  k9s 起動
+  kubectl / helm 操作
+  コンソール Job の実行
+  Blazor Server の Deployment / Service / port-forward
+  A方式: Dockerfile + minikube image build
+  B方式: dotnet publish /t:PublishContainer + minikube image load
+  Temporal の入口
+```
+
+追加サンプルを作ると、さらに学習フローを埋めやすくなります。
+
+```text
+追加するとよいもの
+  Web API サンプル
+  ConfigMap / Secret サンプル
+  Ingress サンプル
+  PostgreSQL + PVC サンプル
+  CronJob サンプル
+```
+
+進め方としては、まず `MinikubeSystemLauncher` で minikube と kubectl 操作に慣れ、次にサンプル YAML を自分で少しずつ変更していくのがおすすめです。
+最初から Helm / Temporal / KEDA に寄せすぎるより、`Pod`、`Deployment`、`Service`、`Job`、`ConfigMap`、`Secret`、`Ingress` の動きを順番に見ていく方が理解しやすくなります。
+
+---
+
+## 23. まとめ
 
 Kubernetes 学習で最初に大事なのは、便利ツールを全部入れることではありません。
 
