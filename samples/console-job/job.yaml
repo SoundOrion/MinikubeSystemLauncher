@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sample-console-job
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        app: sample-console-job
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: sample-console-job
+          image: sample-console-job:dev
+          imagePullPolicy: Never
+          env:
+            - name: JOB_MESSAGE
+              value: "Hello from minikube Job."
