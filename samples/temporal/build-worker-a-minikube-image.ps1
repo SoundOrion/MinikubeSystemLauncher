@@ -1,13 +1,18 @@
 param(
     [string]$ImageTag = "sample-temporal-worker:dev",
+    [string]$MinikubeExe = "",
     [string]$Profile = "minikube"
 )
 
 $ErrorActionPreference = "Stop"
 
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+$MinikubeExe = Resolve-SampleMinikubeExe -MinikubeExe $MinikubeExe
+
 Push-Location $PSScriptRoot
 try {
-    minikube image build -t $ImageTag .\TemporalWorkerSample --profile=$Profile
+    & $MinikubeExe image build -t $ImageTag .\TemporalWorkerSample --profile=$Profile
 
     Write-Host ""
     Write-Host "Worker image created in minikube:" -ForegroundColor Green

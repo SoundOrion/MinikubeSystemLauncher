@@ -1,9 +1,14 @@
 param(
     [string]$ArchivePath = ".\artifacts\sample-temporal-worker-dev.tar.gz",
+    [string]$MinikubeExe = "",
     [string]$Profile = "minikube"
 )
 
 $ErrorActionPreference = "Stop"
+
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+$MinikubeExe = Resolve-SampleMinikubeExe -MinikubeExe $MinikubeExe
 
 Push-Location $PSScriptRoot
 try {
@@ -11,7 +16,7 @@ try {
         throw "Container archive was not found: $ArchivePath"
     }
 
-    minikube image load $ArchivePath --overwrite=true --profile=$Profile
+    & $MinikubeExe image load $ArchivePath --overwrite=true --profile=$Profile
 
     Write-Host ""
     Write-Host "Worker image loaded into minikube." -ForegroundColor Green

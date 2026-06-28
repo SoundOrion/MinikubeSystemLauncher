@@ -1,20 +1,25 @@
 param(
     [string]$Namespace = "temporal",
+    [string]$KubectlExe = "",
+    [string]$HelmExe = "",
     [string]$KubeConfig = "")
 
 $ErrorActionPreference = "Stop"
 
 $commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
 . $commonKubeEnv
-Set-SampleKubeConfig -KubeConfig $KubeConfig
+$KubectlExe = Resolve-SampleKubectlExe -KubectlExe $KubectlExe
+$HelmExe = Resolve-SampleHelmExe -HelmExe $HelmExe
+$kubectlArgs = Get-SampleKubectlArgs -KubeConfig $KubeConfig
+$helmArgs = if ([string]::IsNullOrWhiteSpace($env:KUBECONFIG)) { @() } else { @("--kubeconfig", $env:KUBECONFIG) }
 
 Write-Host "Pods" -ForegroundColor Cyan
-kubectl get pods -n $Namespace -o wide
+& $KubectlExe @kubectlArgs get pods -n $Namespace -o wide
 
 Write-Host ""
 Write-Host "Services" -ForegroundColor Cyan
-kubectl get svc -n $Namespace
+& $KubectlExe @kubectlArgs get svc -n $Namespace
 
 Write-Host ""
 Write-Host "Helm releases" -ForegroundColor Cyan
-helm list -n $Namespace
+& $HelmExe @helmArgs list -n $Namespace

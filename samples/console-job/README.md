@@ -33,6 +33,18 @@ samples\console-job
 
 ---
 
+## PowerShell スクリプトを実行できない場合
+
+`.ps1` の実行がブロックされる場合は、その PowerShell セッションだけ実行ポリシーを緩めてから実行します。
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+`-Scope Process` なので、現在開いている PowerShell を閉じると設定は元に戻ります。
+
+---
+
 ## A方式: Dockerfile + minikube image build
 
 `ConsoleJobSample\Dockerfile` を使って、minikube 側でコンテナイメージをビルドします。

@@ -1,10 +1,14 @@
 param(
     [string]$ArchivePath,
-    [string]$MinikubeExe = "minikube",
+    [string]$MinikubeExe = "",
     [string]$Profile = "minikube"
 )
 
 $ErrorActionPreference = "Stop"
+
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+$MinikubeExe = Resolve-SampleMinikubeExe -MinikubeExe $MinikubeExe
 
 if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
     $ArchivePath = Join-Path $PSScriptRoot "artifacts\sample-blazor-server-dev.tar.gz"
@@ -21,4 +25,4 @@ Write-Host "Container archive loaded into minikube:" -ForegroundColor Green
 Write-Host "  $ArchivePath"
 Write-Host ""
 Write-Host "Apply Kubernetes YAML:" -ForegroundColor Cyan
-Write-Host "  kubectl apply -f `"$PSScriptRoot\k8s\blazor-server.yaml`""
+Write-Host "  .\apply-blazor.ps1"

@@ -24,7 +24,7 @@ try {
     Write-Host "  $PSScriptRoot\artifacts\sample-temporal-worker-dev.tar.gz"
     Write-Host ""
     Write-Host "Load into minikube:" -ForegroundColor Cyan
-    Write-Host "  minikube image load .\artifacts\sample-temporal-worker-dev.tar.gz --overwrite=true"
+    Write-Host "  .\load-worker-b-container-archive.ps1"
 }
 finally {
     Pop-Location

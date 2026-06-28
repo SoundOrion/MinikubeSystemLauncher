@@ -55,6 +55,18 @@ samples\blazor-server
 
 ---
 
+## PowerShell スクリプトを実行できない場合
+
+`.ps1` の実行がブロックされる場合は、その PowerShell セッションだけ実行ポリシーを緩めてから実行します。
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+`-Scope Process` なので、現在開いている PowerShell を閉じると設定は元に戻ります。
+
+---
+
 ## A方式: Dockerfile + minikube image build
 
 `SampleBlazorServer\Dockerfile` を使って、minikube 側でコンテナイメージをビルドします。
@@ -151,7 +163,7 @@ cd samples\blazor-server
 
 ## kubeconfig
 
-このフォルダの PowerShell サンプルは、既定で `..\..\..\.kube\config` を `KUBECONFIG` に設定してから `kubectl` / `helm` を実行します。
+このフォルダの PowerShell サンプルは、既定で `..\..\..\.kube\config` を使います。`KUBECONFIG` 環境変数を設定するだけでなく、`kubectl --kubeconfig <path>` の形で明示して実行します。
 
 別の kubeconfig を使う場合は `-KubeConfig` を指定してください。
 
@@ -159,5 +171,22 @@ cd samples\blazor-server
 .\port-forward-blazor.ps1 -KubeConfig "C:\Users\Hatsuyama\Desktop\k8s\.kube\config"
 ```
 
-`https://127.0.0.1:6443` に接続しようとして失敗する場合は、古い kubeconfig を参照している可能性があります。`SystemMinikubeHost` の `3. kubeconfig 出力のみ` を実行してから再試行してください。
+`https://127.0.0.1:6443` に接続しようとして失敗する場合は、古い kubeconfig か別環境の kubeconfig を参照しています。`SystemMinikubeHost` の `3. kubeconfig 出力のみ` を実行し、更新版 zip の `samples` フォルダに置き換えてから再試行してください。
 
+
+
+## minikube.exe が見つからない場合
+
+PowerShell スクリプトは、既定で次の順に `minikube.exe` を探します。
+
+```text
+1. samples の親フォルダにある tools\minikube\minikube.exe
+2. src\SystemMinikubeHost\App.config の MinikubeExePath
+3. PATH 上の minikube
+```
+
+見つからない場合は、明示的に指定できます。
+
+```powershell
+.\load-b-container-archive.ps1 -MinikubeExe "C:\Users\Hatsuyama\Desktop\k8s\tools\minikube\minikube.exe"
+```

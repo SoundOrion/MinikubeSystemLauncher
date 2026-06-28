@@ -14,6 +14,7 @@ namespace UserKubeClient
         public string LogsDirectory { get; private set; }
         public string KubectlExePath { get; private set; }
         public string HelmExePath { get; private set; }
+        public string K9sExePath { get; private set; }
 
         public static AppOptions Load()
         {
@@ -22,6 +23,7 @@ namespace UserKubeClient
             options.LogsDirectory = FullPath(Read("LogsDirectory", @"C:\Users\taro\.minikube-system-learning\logs"));
             options.KubectlExePath = Read("KubectlExePath", @"C:\Program Files\Kubernetes\kubectl.exe");
             options.HelmExePath = Read("HelmExePath", @"C:\Program Files\Helm\helm.exe");
+            options.K9sExePath = Read("K9sExePath", @"C:\Program Files\k9s\k9s.exe");
             return options;
         }
 
@@ -282,6 +284,7 @@ namespace UserKubeClient
             if (command == "port-forward") return PortForwardFromArgs(rest);
             if (command == "kubectl") return RunKubectl(JoinArguments(rest));
             if (command == "helm") return RunHelm(JoinArguments(rest));
+            if (command == "k9s") return OpenK9s(JoinArguments(rest));
             if (command == "shell") return OpenShell();
             if (command == "logs") return ShowLogsWithContent();
             if (command == "paths") return ShowPaths();
@@ -340,6 +343,7 @@ namespace UserKubeClient
                     new MenuItem("4", "Helm一覧: helm list -A", null, ConsoleColor.Yellow),
                     new MenuItem("5", "helm 任意コマンドを実行", null, ConsoleColor.Yellow),
                     new MenuItem("6", "KUBECONFIG設定済みの cmd.exe を開く", null, ConsoleColor.Yellow),
+                    new MenuItem("18", "k9s 起動", null, ConsoleColor.Yellow),
                     new MenuItem("7", "最新ログを表示", null, ConsoleColor.DarkGray),
                     new MenuItem("8", "現在のパス設定を表示", null, ConsoleColor.DarkGray),
                     new MenuItem("0", "終了", null, ConsoleColor.DarkGray)
@@ -367,6 +371,7 @@ namespace UserKubeClient
                 else if (input == "15") RunMenuAction("Pod ログ", delegate { return PodLogsInteractive(); });
                 else if (input == "16") RunMenuAction("Pod 詳細", delegate { return DescribePodInteractive(); });
                 else if (input == "17") RunMenuAction("port-forward", delegate { return PortForwardInteractive(); });
+                else if (input == "18") RunMenuAction("k9s", delegate { return OpenK9s(string.Empty); });
                 else if (input == "0") return 0;
                 else
                 {
@@ -654,6 +659,49 @@ namespace UserKubeClient
             }
         }
 
+        private static int OpenK9s(string extraArguments)
+        {
+            if (!CheckKubeConfig()) return 2;
+
+            if (string.IsNullOrWhiteSpace(Config.K9sExePath) || !File.Exists(Config.K9sExePath))
+            {
+                Warn("k9s.exe が見つかりません: " + Config.K9sExePath);
+                Warn("UserKubeClient.exe.config の K9sExePath を実際の配置に合わせて変更してください。");
+                return 2;
+            }
+
+            string arguments = "--kubeconfig " + Quote(Config.KubeConfigPath);
+            if (!string.IsNullOrWhiteSpace(extraArguments))
+            {
+                arguments += " " + extraArguments;
+            }
+
+            Console.WriteLine("k9s を起動します。終了する場合は k9s 内で :q または Ctrl+C を使ってください。");
+            return RunInteractiveProcess(Config.K9sExePath, arguments, true);
+        }
+
+        private static int RunInteractiveProcess(string exePath, string arguments, bool setKubeConfig)
+        {
+            Console.WriteLine();
+            Console.WriteLine(Quote(exePath) + " " + arguments);
+
+            ProcessStartInfo psi = new ProcessStartInfo();
+            psi.FileName = exePath;
+            psi.Arguments = arguments ?? string.Empty;
+            psi.UseShellExecute = false;
+            psi.CreateNoWindow = false;
+
+            if (setKubeConfig) psi.EnvironmentVariables["KUBECONFIG"] = Config.KubeConfigPath;
+
+            using (Process p = Process.Start(psi))
+            {
+                if (p == null) throw new InvalidOperationException(exePath + " を開始できません。");
+                p.WaitForExit();
+                Ui.ExitCode(p.ExitCode);
+                return p.ExitCode;
+            }
+        }
+
         private static int ShowPaths()
         {
             Console.WriteLine("現在の明示パス設定");
@@ -662,6 +710,7 @@ namespace UserKubeClient
             Console.WriteLine("LogsDirectory  : " + Config.LogsDirectory);
             Console.WriteLine("kubectl.exe    : " + Config.KubectlExePath);
             Console.WriteLine("helm.exe       : " + Config.HelmExePath);
+            Console.WriteLine("k9s.exe        : " + Config.K9sExePath);
             return 0;
         }
 
@@ -710,6 +759,7 @@ namespace UserKubeClient
             Console.WriteLine("  UserKubeClient.exe port-forward svc/sample-app 8080:80 default");
             Console.WriteLine("  UserKubeClient.exe kubectl get pods -A");
             Console.WriteLine("  UserKubeClient.exe helm list -A");
+            Console.WriteLine("  UserKubeClient.exe k9s");
             Console.WriteLine("  UserKubeClient.exe shell");
             Console.WriteLine("  UserKubeClient.exe logs");
             Console.WriteLine("  UserKubeClient.exe paths");

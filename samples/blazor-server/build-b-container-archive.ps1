@@ -30,7 +30,7 @@ try {
     Write-Host "  $archive"
     Write-Host ""
     Write-Host "Load into minikube:" -ForegroundColor Cyan
-    Write-Host "  minikube image load `"$archive`" --overwrite=true --profile=minikube"
+    Write-Host "  .\load-b-container-archive.ps1"
 }
 finally {
     Pop-Location

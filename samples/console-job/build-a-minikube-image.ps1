@@ -1,16 +1,20 @@
 param(
     [string]$ImageTag = "sample-console-job:dev",
-    [string]$MinikubeExe = "minikube",
+    [string]$MinikubeExe = "",
     [string]$Profile = "minikube"
 )
 
 $ErrorActionPreference = "Stop"
 
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+$MinikubeExe = Resolve-SampleMinikubeExe -MinikubeExe $MinikubeExe
+
 Push-Location $PSScriptRoot
 try {
     $projectDir = Join-Path $PSScriptRoot "ConsoleJobSample"
 
-    Write-Host "Build container image in minikube:" -ForegroundColor Cyan
+    Write-Host "Build Console Job image in minikube:" -ForegroundColor Cyan
     Write-Host "  image: $ImageTag"
     Write-Host "  path : $projectDir"
     Write-Host ""

@@ -1,10 +1,14 @@
 param(
     [string]$ImageTag = "sample-blazor-server:dev",
-    [string]$MinikubeExe = "minikube",
+    [string]$MinikubeExe = "",
     [string]$Profile = "minikube"
 )
 
 $ErrorActionPreference = "Stop"
+
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+$MinikubeExe = Resolve-SampleMinikubeExe -MinikubeExe $MinikubeExe
 
 Push-Location $PSScriptRoot
 try {
@@ -22,7 +26,7 @@ try {
     Write-Host "  $ImageTag"
     Write-Host ""
     Write-Host "Apply Kubernetes YAML:" -ForegroundColor Cyan
-    Write-Host "  kubectl apply -f `"$PSScriptRoot\k8s\blazor-server.yaml`""
+    Write-Host "  .\apply-blazor.ps1"
 }
 finally {
     Pop-Location

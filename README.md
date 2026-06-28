@@ -13,7 +13,7 @@ SystemMinikubeHost
 
 UserKubeClient
   起動済み Kubernetes を使う側
-  kubectl / helm を使って Pod、Deployment、Service、Ingress、YAML、ログ確認などを行う
+  kubectl / helm / k9s を使って Pod、Deployment、Service、Ingress、YAML、ログ確認などを行う
 ```
 
 ---
@@ -87,6 +87,24 @@ kubectl describe pod <pod-name>
 kubectl port-forward svc/sample-app 8080:80
 ```
 
+### k9s
+
+Kubernetes の状態をターミナル上で見やすく確認するための TUI ツールです。
+
+`kubectl get pods` や `kubectl describe pod`、`kubectl logs` を毎回打たなくても、Pod、Deployment、Service、Event、ログなどを画面上で移動しながら確認できます。
+
+```text
+Kubernetes Dashboard
+  ブラウザで見るGUI
+  初めて状態を眺めるときに分かりやすい
+
+k9s
+  ターミナルで使うTUI
+  Podの状態確認、ログ確認、describe相当の確認を素早く行いやすい
+```
+
+このプロジェクトでは、`UserKubeClient` から `k9s.exe` を起動できます。`UserKubeClient` が使う kubeconfig を渡して起動するため、別途 `KUBECONFIG` を手で設定しなくても同じクラスターを見られます。
+
 ### kubeconfig
 
 `kubectl` や `helm` が、どの Kubernetes クラスターへ接続するかを知るための設定ファイルです。
@@ -100,7 +118,7 @@ SystemMinikubeHost 側
 
 UserKubeClient 側
   KubeConfigPath
-  kubectl / helm 操作用の kubeconfig
+  kubectl / helm / k9s 操作用の kubeconfig
 ```
 
 `SystemMinikubeHost` の `3. kubeconfig 出力のみ` は、minikube 側の kubeconfig を `UserKubeClient` 用に flatten して出力します。
@@ -124,6 +142,7 @@ Helm
 ```text
 Helm一覧: helm list -A
 helm 任意コマンドを実行
+k9s 起動
 ```
 
 ### Temporal
@@ -520,6 +539,7 @@ LogRetentionDays
 
     <add key="KubectlExePath" value="C:\Program Files\Kubernetes\kubectl.exe" />
     <add key="HelmExePath" value="C:\Program Files\Helm\helm.exe" />
+    <add key="K9sExePath" value="C:\Program Files\k9s\k9s.exe" />
   </appSettings>
 </configuration>
 ```
@@ -528,7 +548,7 @@ LogRetentionDays
 
 ```text
 KubeConfigPath
-  kubectl / helm が使う kubeconfig
+  kubectl / helm / k9s が使う kubeconfig
   SystemMinikubeHost の ExportedKubeConfigPath と同じ値にする
 
 LogsDirectory
@@ -539,6 +559,9 @@ KubectlExePath
 
 HelmExePath
   helm.exe の場所
+
+K9sExePath
+  k9s.exe の場所
 ```
 
 ツールの場所が分からない場合は、Windows のコマンドプロンプトで確認します。
@@ -547,9 +570,48 @@ HelmExePath
 where minikube
 where kubectl
 where helm
+where k9s
 ```
 
 ---
+
+
+## PowerShell サンプルの実行ポリシー
+
+PowerShell で `.ps1` を実行できない場合は、その PowerShell セッションだけ実行ポリシーを緩めてから実行します。
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+`-Scope Process` なので、現在開いている PowerShell を閉じると設定は元に戻ります。
+
+---
+
+## PowerShell サンプルと kubeconfig
+
+`samples` 配下の PowerShell サンプルは、既定で次の kubeconfig を使います。
+
+```text
+<MinikubeSystemLauncher の親フォルダ>\.kube\config
+```
+
+たとえばこの配置なら、次のファイルです。
+
+```text
+C:\Users\Hatsuyama\Desktop\k8s\.kube\config
+```
+
+これは `SystemMinikubeHost` が `kubeconfig 出力` で作成するファイルです。サンプルスクリプトは `KUBECONFIG` 環境変数を設定するだけでなく、`kubectl --kubeconfig <path>` / `helm --kubeconfig <path>` の形で明示して実行します。
+
+別の kubeconfig を使いたい場合は、各スクリプトに `-KubeConfig` を指定します。
+
+```powershell
+.\port-forward-blazor.ps1 -KubeConfig "C:\Users\Hatsuyama\Desktop\k8s\.kube\config"
+```
+
+`kubectl` が `https://127.0.0.1:6443` へ接続しようとして失敗する場合は、古い kubeconfig や別環境の kubeconfig を参照しています。`SystemMinikubeHost` の `3. kubeconfig 出力のみ` を実行し、サンプルフォルダを更新版 zip の内容に置き換えてから再試行してください。
+
 
 ## ビルド
 
@@ -690,6 +752,7 @@ UserKubeClient メニュー
   [ 4] Helm一覧: helm list -A
   [ 5] helm 任意コマンドを実行
   [ 6] KUBECONFIG設定済みの cmd.exe を開く
+  [18] k9s 起動
   [ 7] 最新ログを表示              [ 8] 現在のパス設定を表示
 
   [0] 終了
@@ -704,6 +767,8 @@ UserKubeClient メニュー
 10. Service一覧
 12. Event一覧
 ```
+
+Pod や Deployment を視覚的に確認したい場合は、`18. k9s 起動` を使えます。k9s はフルスクリーンのターミナルUIなので、終了するときは k9s 内で `:q`、または `Ctrl+C` を使います。
 
 ---
 
@@ -1202,10 +1267,13 @@ UserKubeClient.exe describe-pod sample-app-xxxxx default
 UserKubeClient.exe port-forward svc/sample-app 8080:80 default
 UserKubeClient.exe kubectl get pods -A
 UserKubeClient.exe helm list -A
+UserKubeClient.exe k9s
 UserKubeClient.exe shell
 UserKubeClient.exe logs
 UserKubeClient.exe paths
 ```
+
+`UserKubeClient.exe k9s` は対話型ツールをそのまま起動します。通常の `kubectl` コマンドと違って、k9s は画面を占有するターミナルUIなので、ログを標準出力として取得するのではなく、同じコンソール上で直接操作します。
 
 ---
 
