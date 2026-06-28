@@ -348,6 +348,7 @@ dotnet publish .\MyApp.csproj `
   -c Release `
   --os linux `
   --arch x64 `
+  --self-contained false `
   /t:PublishContainer `
   -p:ContainerRepository=sample-app `
   -p:ContainerImageTag=dev `
