@@ -683,6 +683,10 @@ namespace SystemMinikubeHost
             return rc1 != 0 ? rc1 : rc2;
         }
 
+        /// <summary>
+        /// VirtualBox などを試すために Hyper-V を一時的に止めたい場合の退避用です。
+        /// メニューには接続していません。必要な場合だけ追加して使ってください。
+        /// </summary>
         private static int DisableHyperV()
         {
             if (!CanRunElevatedJob("Hyper-V 無効化")) return 100;
