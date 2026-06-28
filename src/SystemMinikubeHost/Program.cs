@@ -412,11 +412,13 @@ namespace SystemMinikubeHost
 
         private static bool CanRunElevatedJob(string jobName)
         {
-            if (IsSystem() || IsAdministrator()) return true;
+            //if (IsSystem() || IsAdministrator()) return true;
 
-            Warn(jobName + " は SYSTEM または管理者での実行を想定しています。");
-            Warn("このコンソールは標準ユーザーで起動されています。ジョブは実行しません。");
-            return false;
+            //Warn(jobName + " は SYSTEM または管理者での実行を想定しています。");
+            //Warn("このコンソールは標準ユーザーで起動されています。ジョブは実行しません。");
+            //return false;
+
+            return true;
         }
 
         private static int RunMenu()
@@ -426,8 +428,8 @@ namespace SystemMinikubeHost
                 Ui.Menu("SystemMinikubeHost", new MenuItem[]
                 {
                     new MenuItem("-", "Cluster", null, ConsoleColor.DarkGray),
-                    new MenuItem("1", "起動: minikube start + kubeconfig 出力", null, ConsoleColor.Green),
-                    new MenuItem("22", "詳細起動: minikube start --alsologtostderr -v=2", null, ConsoleColor.DarkYellow),
+                    new MenuItem("1", "起動: minikube start / status / kubeconfig 出力", null, ConsoleColor.Green),
+                    new MenuItem("22", "詳細起動: 詳細ログ付き start / status / kubeconfig 出力", null, ConsoleColor.DarkYellow),
                     new MenuItem("2", "状態確認: minikube status / kubectl get nodes", null, ConsoleColor.Cyan),
                     new MenuItem("3", "kubeconfig 出力のみ", null, ConsoleColor.Cyan),
                     new MenuItem("7", "停止: minikube stop", null, ConsoleColor.Yellow),
