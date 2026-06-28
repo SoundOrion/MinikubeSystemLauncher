@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ContainerRepository>sample-temporal-worker</ContainerRepository>
+    <ContainerImageTag>dev</ContainerImageTag>
+    <ContainerArchiveOutputPath>../artifacts/sample-temporal-worker-dev.tar.gz</ContainerArchiveOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Temporalio" Version="1.15.0" />
+    <PackageReference Include="Temporalio.Extensions.Hosting" Version="1.15.0" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,114 @@
+:root {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #172033;
+    background: #f5f7fb;
+}
+
+body {
+    margin: 0;
+}
+
+.shell {
+    min-height: 100vh;
+}
+
+.topbar {
+    padding: 20px 32px;
+    background: #111827;
+    color: white;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+
+.brand {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.sub {
+    margin-top: 4px;
+    color: #cbd5e1;
+    font-size: 14px;
+}
+
+.content {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+.hero {
+    background: white;
+    border-radius: 18px;
+    padding: 32px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+h1 {
+    margin: 18px 0 10px;
+    font-size: 34px;
+}
+
+p {
+    line-height: 1.8;
+    color: #475569;
+}
+
+.primary {
+    margin-top: 20px;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 12px;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.primary:hover {
+    background: #1d4ed8;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-top: 22px;
+}
+
+.card {
+    background: white;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+}
+
+.card h2 {
+    margin-top: 0;
+}
+
+dl {
+    margin: 0;
+}
+
+dt {
+    margin-top: 12px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+dd {
+    margin: 4px 0 0;
+    word-break: break-all;
+}

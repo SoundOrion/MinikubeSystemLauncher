@@ -343,7 +343,7 @@ namespace SystemMinikubeHost
             }
             catch
             {
-                // コンソール環境によっては encoding 変更に失敗するため、学習用アプリでは続行します。
+                // コンソール環境によっては encoding 変更に失敗するため、学習・ローカル開発用アプリでは続行します。
             }
         }
 
@@ -412,13 +412,11 @@ namespace SystemMinikubeHost
 
         private static bool CanRunElevatedJob(string jobName)
         {
-            //if (IsSystem() || IsAdministrator()) return true;
+            if (IsSystem() || IsAdministrator()) return true;
 
-            //Warn(jobName + " は SYSTEM または管理者での実行を想定しています。");
-            //Warn("このコンソールは標準ユーザーで起動されています。ジョブは実行しません。");
-            //return false;
-
-            return true;
+            Warn(jobName + " は SYSTEM または管理者での実行を想定しています。");
+            Warn("このコンソールは標準ユーザーで起動されています。ジョブは実行しません。");
+            return false;
         }
 
         private static int RunMenu()
@@ -428,8 +426,8 @@ namespace SystemMinikubeHost
                 Ui.Menu("SystemMinikubeHost", new MenuItem[]
                 {
                     new MenuItem("-", "Cluster", null, ConsoleColor.DarkGray),
-                    new MenuItem("1", "起動: minikube start / status / kubeconfig 出力", null, ConsoleColor.Green),
-                    new MenuItem("22", "詳細起動: 詳細ログ付き start / status / kubeconfig 出力", null, ConsoleColor.DarkYellow),
+                    new MenuItem("1", "起動: minikube start + kubeconfig 出力", null, ConsoleColor.Green),
+                    new MenuItem("22", "詳細起動: minikube start --alsologtostderr -v=2", null, ConsoleColor.DarkYellow),
                     new MenuItem("2", "状態確認: minikube status / kubectl get nodes", null, ConsoleColor.Cyan),
                     new MenuItem("3", "kubeconfig 出力のみ", null, ConsoleColor.Cyan),
                     new MenuItem("7", "停止: minikube stop", null, ConsoleColor.Yellow),
@@ -683,10 +681,9 @@ namespace SystemMinikubeHost
             return rc1 != 0 ? rc1 : rc2;
         }
 
-        /// <summary>
-        /// VirtualBox などを試すために Hyper-V を一時的に止めたい場合の退避用です。
-        /// メニューには接続していません。必要な場合だけ追加して使ってください。
-        /// </summary>
+        /*
+        // VirtualBox などを試すために Hyper-V を一時的に止めたい場合の退避用です。
+        // メニューには接続していません。必要な場合だけコメントアウトを外して使ってください。
         private static int DisableHyperV()
         {
             if (!CanRunElevatedJob("Hyper-V 無効化")) return 100;
@@ -697,6 +694,7 @@ namespace SystemMinikubeHost
             Console.WriteLine("完了。必要に応じて Windows を再起動してください。");
             return rc1 != 0 ? rc1 : rc2;
         }
+        */
 
         private static int AddonsList()
         {
@@ -833,7 +831,7 @@ namespace SystemMinikubeHost
             Console.WriteLine("  " + imageOrTarPath);
             Log.Information("Load image into minikube: {ImageOrTarPath}", imageOrTarPath);
 
-            return RunCmd(Quote(Config.MinikubeExePath) + " image load " + QuoteIfNeeded(imageOrTarPath) + " --profile=minikube", MinikubeEnvironment());
+            return RunCmd(Quote(Config.MinikubeExePath) + " image load " + QuoteIfNeeded(imageOrTarPath) + " --overwrite=true --profile=minikube", MinikubeEnvironment());
         }
 
         private static int ImageBuildInteractive()
@@ -925,8 +923,8 @@ namespace SystemMinikubeHost
             Console.WriteLine("1. SystemMinikubeHost 側でイメージを用意します。");
             Console.WriteLine("   minikube image build -t sample-app:dev C:\\Users\\taro\\src\\sample-app");
             Console.WriteLine("   または、既存イメージ/tarを読み込みます。");
-            Console.WriteLine("   minikube image load sample-app:dev");
-            Console.WriteLine("   minikube image load C:\\Users\\taro\\images\\sample-app-dev.tar");
+            Console.WriteLine("   minikube image load sample-app:dev --overwrite=true");
+            Console.WriteLine("   minikube image load C:\\Users\\taro\\images\\sample-app-dev.tar.gz --overwrite=true");
             Console.WriteLine();
             Console.WriteLine("2. UserKubeClient 側で YAML を apply します。");
             Console.WriteLine("   kubectl apply -f deployment.yaml");

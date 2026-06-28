@@ -126,6 +126,35 @@ Helm一覧: helm list -A
 helm 任意コマンドを実行
 ```
 
+### Temporal
+
+Temporal は、複数ステップの処理を安全に進めるためのワークフロー基盤です。
+
+例えば、支払い、在庫確認、メール送信、外部API呼び出しのように、途中で失敗したり時間がかかったりする処理を Workflow と Activity として書けます。
+
+```text
+Workflow
+  処理全体の流れ
+  例: 注文処理、バッチ処理、申請処理
+
+Activity
+  実際の作業単位
+  例: DB更新、HTTP呼び出し、ファイル作成、メール送信
+
+Worker
+  Workflow / Activity のコードを実行するアプリ
+  .NET Worker は Visual Studio からも実行できる
+
+Task Queue
+  Temporal Server と Worker をつなぐキュー名
+  Worker は Task Queue を監視して処理を受け取る
+
+Temporal Web UI
+  Workflow の実行履歴、状態、失敗内容を見る画面
+```
+
+このプロジェクトでは、Temporal Server と Web UI は minikube 上に置き、最初は .NET Worker を Windows 側から接続する形にしています。
+
 ### minikube addon
 
 minikube に追加機能を入れる仕組みです。
@@ -197,8 +226,45 @@ MinikubeSystemLauncher
       load-b-container-archive.ps1
       README.md
 
+    blazor-server
+      SampleBlazorServer
+        SampleBlazorServer.csproj
+        Program.cs
+        Dockerfile
+        Components
+        wwwroot
+      k8s
+        blazor-server.yaml
+      build-a-minikube-image.ps1
+      build-b-container-archive.ps1
+      load-b-container-archive.ps1
+      apply-blazor.ps1
+      delete-blazor.ps1
+      port-forward-blazor.ps1
+      README.md
+
     local-dev
       sample-app.yaml
+
+    temporal
+      values-postgresql.yaml
+      values-temporal.yaml
+      install-temporal.ps1
+      uninstall-temporal.ps1
+      status-temporal.ps1
+      port-forward-temporal-ui.ps1
+      port-forward-temporal-frontend.ps1
+      run-worker-local.ps1
+      start-workflow-local.ps1
+      build-worker-a-minikube-image.ps1
+      build-worker-b-container-archive.ps1
+      load-worker-b-container-archive.ps1
+      TemporalWorkerSample
+        TemporalWorkerSample.csproj
+        Program.cs
+        Dockerfile
+      k8s
+        worker-deployment.yaml
 ```
 
 ### SystemMinikubeHost
@@ -258,9 +324,31 @@ B方式
 
 どちらの方式でも最終的なイメージ名は `sample-console-job:dev` です。同じ `job.yaml` で実行できます。
 
+### samples\blazor-server
+
+.NET 8 の Blazor Server を Kubernetes の Deployment / Service として実行するサンプルです。
+
+コンソール Job と違い、ブラウザで画面を確認できます。コンテナイメージの作り方は `samples\console-job` と同じく、A方式とB方式の両方を用意しています。
+
+```text
+A方式
+  Dockerfile + minikube image build
+
+B方式
+  dotnet publish /t:PublishContainer + minikube image load
+```
+
+どちらの方式でも最終的なイメージ名は `sample-blazor-server:dev` です。同じ `k8s\blazor-server.yaml` で実行できます。
+
 ### samples\local-dev
 
 Web アプリ / Web API を Deployment + Service + Ingress で起動するための最小 YAML です。
+
+### samples\temporal
+
+Temporal Server / Temporal Web UI を minikube に入れ、Windows / Visual Studio 側の .NET Worker から接続するサンプルです。
+
+このサンプルでは、Temporal 本体と PostgreSQL は Kubernetes 上で動かし、最初は Worker と Workflow 起動だけを Windows 側で実行します。慣れてきたら Worker も Kubernetes Pod として動かせます。
 
 ---
 
@@ -276,14 +364,18 @@ kubectl
 helm  ※ Helm を使う場合
 ```
 
-`samples\console-job` の B方式を使う場合は、.NET 8 SDK も必要です。
+`samples\console-job`、`samples\blazor-server`、`samples\temporal` の .NET 8 サンプルを使う場合は、.NET 8 SDK も必要です。
 
 ```text
 .NET 8 SDK
-  dotnet publish /t:PublishContainer でコンテナアーカイブを作るために使う
+  dotnet publish /t:PublishContainer でコンテナアーカイブを作る
+  ConsoleJobSample / SampleBlazorServer / TemporalWorkerSample をビルドする
+  TemporalWorkerSample を Windows 側で実行する
 ```
 
 A方式では、Dockerfile の中で .NET 8 SDK / Runtime イメージを使います。ローカル PC の Visual Studio でビルドするのではなく、コンテナビルド中に `dotnet restore` / `dotnet publish` を実行します。
+
+Temporal サンプルでは、Temporal Server のインストールに Helm を使います。Temporal Worker 側では NuGet パッケージ `Temporalio` / `Temporalio.Extensions.Hosting` を使います。
 
 ---
 
@@ -806,6 +898,258 @@ kubectl port-forward svc/sample-app 8080:80
 
 ---
 
+## Blazor Server をブラウザで動かす
+
+コンソールアプリの Job は画面を出さず、`kubectl logs` で結果を見ます。画面で確認したい場合は、Web アプリとして動かします。
+
+このプロジェクトには、最小の Blazor Server サンプルを入れています。
+
+```text
+samples\blazor-server\SampleBlazorServer
+  .NET 8 の Blazor Server アプリ
+
+samples\blazor-server\k8s\blazor-server.yaml
+  sample-blazor-server:dev を Deployment / Service として起動する YAML
+```
+
+流れは次の通りです。
+
+```text
+1. Blazor Server をコンテナイメージ化する
+2. Kubernetes に Deployment / Service を作る
+3. Service を port-forward する
+4. ブラウザで http://localhost:8080 を開く
+```
+
+### A方式: Dockerfile + minikube image build
+
+`SystemMinikubeHost` の `19. イメージビルド` を選びます。
+
+```text
+image tag : sample-blazor-server:dev
+build path: C:\Users\taro\src\MinikubeSystemLauncher\samples\blazor-server\SampleBlazorServer
+```
+
+PowerShell で実行する場合です。
+
+```powershell
+cd samples\blazor-server
+.\build-a-minikube-image.ps1
+```
+
+この方式では、Dockerfile の中で .NET SDK イメージを使って `dotnet restore` / `dotnet publish` を実行します。
+
+### B方式: dotnet publish /t:PublishContainer + minikube image load
+
+Visual Studio / .NET SDK 側でコンテナアーカイブを作り、minikube に読み込みます。
+
+```powershell
+cd samples\blazor-server
+.\build-b-container-archive.ps1
+.\load-b-container-archive.ps1
+```
+
+作成されるファイルの例です。
+
+```text
+samples\blazor-server\artifacts\sample-blazor-server-dev.tar.gz
+```
+
+`SystemMinikubeHost` の `18. イメージ読み込み` でこの tar.gz を指定しても同じです。
+
+### Kubernetes に適用する
+
+`UserKubeClient` の `13. YAML適用` を選び、次の YAML を指定します。
+
+```text
+samples\blazor-server\k8s\blazor-server.yaml
+```
+
+PowerShell で実行する場合です。
+
+```powershell
+cd samples\blazor-server
+.\apply-blazor.ps1
+```
+
+状態確認です。
+
+```cmd
+kubectl get pods
+kubectl get svc sample-blazor-server
+```
+
+### ブラウザで見る
+
+`UserKubeClient` の `17. port-forward` でもできます。入力例です。
+
+```text
+namespace: default
+resource : svc/sample-blazor-server
+ports    : 8080:80
+```
+
+PowerShell で実行する場合です。
+
+```powershell
+cd samples\blazor-server
+.\port-forward-blazor.ps1
+```
+
+ブラウザで開きます。
+
+```text
+http://localhost:8080
+```
+
+終了するときは、port-forward している PowerShell で `Ctrl+C` を押します。
+
+### 削除する
+
+```powershell
+cd samples\blazor-server
+.\delete-blazor.ps1
+```
+
+または `UserKubeClient` の `14. YAML削除` で `samples\blazor-server\k8s\blazor-server.yaml` を指定します。
+
+## Temporal を minikube で使う
+
+Temporal のように複数コンポーネントがあるミドルウェアは、Helm を使うと扱いやすいです。
+
+このプロジェクトには、Temporal Server / Temporal Web UI / PostgreSQL / .NET Worker の最小サンプルを入れています。
+
+```text
+samples\temporal
+  values-postgresql.yaml
+  values-temporal.yaml
+  install-temporal.ps1
+  status-temporal.ps1
+  port-forward-temporal-ui.ps1
+  port-forward-temporal-frontend.ps1
+  run-worker-local.ps1
+  start-workflow-local.ps1
+  build-worker-a-minikube-image.ps1
+  build-worker-b-container-archive.ps1
+  load-worker-b-container-archive.ps1
+  TemporalWorkerSample
+```
+
+Temporal 公式 Helm chart は Temporal Server コンポーネントをデプロイします。DB は別途用意する前提なので、このサンプルでは PostgreSQL を Helm で先に入れます。
+
+### 1. Temporal をインストールする
+
+先に minikube を起動し、storage 系 addon を有効化しておきます。
+
+```text
+SystemMinikubeHost
+  1. 起動
+  16. おすすめaddonまとめて有効化
+```
+
+その後、PowerShell で実行します。
+
+```powershell
+cd samples\temporal
+.\install-temporal.ps1
+```
+
+状態確認です。
+
+```powershell
+.\status-temporal.ps1
+```
+
+### 2. Temporal Web UI を開く
+
+別の PowerShell で実行します。
+
+```powershell
+cd samples\temporal
+.\port-forward-temporal-ui.ps1
+```
+
+ブラウザで開きます。
+
+```text
+http://localhost:8080
+```
+
+### 3. Temporal frontend を Windows に公開する
+
+Worker / Client を Windows 側から動かすため、Temporal frontend を port-forward します。
+
+```powershell
+cd samples\temporal
+.\port-forward-temporal-frontend.ps1
+```
+
+接続先は次です。
+
+```text
+localhost:7233
+```
+
+### 4. .NET Worker を Windows 側で起動する
+
+別の PowerShell で実行します。
+
+```powershell
+cd samples\temporal
+.\run-worker-local.ps1
+```
+
+この Worker は `sample-task-queue` を監視します。
+
+### 5. Workflow を実行する
+
+さらに別の PowerShell で実行します。
+
+```powershell
+cd samples\temporal
+.\start-workflow-local.ps1 -Name Hatsuyama
+```
+
+成功すると、Worker 側に Activity のログが出ます。Temporal Web UI でも Workflow の実行履歴を確認できます。
+
+### 6. Worker も Kubernetes Pod にする場合
+
+最初は Windows 側 Worker で十分ですが、慣れてきたら Worker も Pod として起動できます。
+
+A方式です。
+
+```powershell
+cd samples\temporal
+.\build-worker-a-minikube-image.ps1
+kubectl apply -f .\k8s\worker-deployment.yaml
+```
+
+B方式です。
+
+```powershell
+cd samples\temporal
+.\build-worker-b-container-archive.ps1
+.\load-worker-b-container-archive.ps1
+kubectl apply -f .\k8s\worker-deployment.yaml
+```
+
+Pod 内 Worker は Kubernetes の Service 名で Temporal に接続します。
+
+```text
+temporal-frontend.temporal.svc.cluster.local:7233
+```
+
+### 7. Temporal を削除する
+
+```powershell
+cd samples\temporal
+.\uninstall-temporal.ps1
+```
+
+PostgreSQL の PVC は自動削除しません。完全に消したい場合は、スクリプトに表示される `kubectl delete pvc ...` を実行します。
+
+---
+
 ## SystemMinikubeHost のコマンド一覧
 
 メニューではなく引数付きでも実行できます。
@@ -1031,7 +1375,13 @@ Windows 側の一部メッセージや外部ツールの出力では、環境に
 9. samples\console-job の A方式を試す
 10. samples\console-job の B方式を試す
 11. Job の logs を見る
-12. sample-app.yaml を読み、Web アプリ / Web API の YAML も試す
-13. kubectl apply -f でアプリを起動する
-14. logs / describe / port-forward を試す
+12. samples\blazor-server の A方式またはB方式を試す
+13. Blazor Server を Deployment / Service として起動する
+14. port-forward で http://localhost:8080 を開く
+15. sample-app.yaml を読み、Web アプリ / Web API の YAML も試す
+16. logs / describe / port-forward を試す
+17. samples\temporal の install-temporal.ps1 で Temporal を入れる
+18. Temporal Web UI と frontend を port-forward する
+19. TemporalWorkerSample を Windows 側から実行する
+20. 必要なら Worker も Pod として動かす
 ```

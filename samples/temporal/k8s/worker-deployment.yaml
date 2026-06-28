@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-temporal-worker
+  namespace: temporal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-temporal-worker
+  template:
+    metadata:
+      labels:
+        app: sample-temporal-worker
+    spec:
+      containers:
+        - name: worker
+          image: sample-temporal-worker:dev
+          imagePullPolicy: Never
+          args: ["worker"]
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: temporal-frontend.temporal.svc.cluster.local:7233
+            - name: TEMPORAL_NAMESPACE
+              value: default
+            - name: TEMPORAL_TASK_QUEUE
+              value: sample-task-queue

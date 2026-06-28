@@ -1,0 +1,16 @@
+# PostgreSQL for local Temporal on minikube.
+# This is for learning/local development only.
+fullnameOverride: temporal-postgresql
+
+architecture: standalone
+
+auth:
+  postgresPassword: temporal
+  username: temporal
+  password: temporal
+  database: temporal
+
+primary:
+  persistence:
+    enabled: true
+    size: 2Gi

@@ -1,0 +1,52 @@
+@page "/"
+
+<PageTitle>Sample Blazor Server</PageTitle>
+
+<section class="hero">
+    <div class="badge">Running on Kubernetes</div>
+    <h1>Blazor Server が動いています</h1>
+    <p>
+        この画面は minikube 上の Pod で動いている ASP.NET Core / Blazor Server サンプルです。
+        ボタンを押すとサーバー側の状態が更新されます。
+    </p>
+
+    <button class="primary" @onclick="Increment">クリック: @count</button>
+</section>
+
+<section class="grid">
+    <article class="card">
+        <h2>Pod</h2>
+        <dl>
+            <dt>Machine</dt>
+            <dd>@Environment.MachineName</dd>
+            <dt>OS</dt>
+            <dd>@Environment.OSVersion</dd>
+            <dt>ProcessId</dt>
+            <dd>@Environment.ProcessId</dd>
+        </dl>
+    </article>
+
+    <article class="card">
+        <h2>Environment</h2>
+        <dl>
+            <dt>Message</dt>
+            <dd>@Message</dd>
+            <dt>PORT</dt>
+            <dd>@(Environment.GetEnvironmentVariable("PORT") ?? "8080")</dd>
+            <dt>Now</dt>
+            <dd>@DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss zzz")</dd>
+        </dl>
+    </article>
+</section>
+
+@code {
+    private int count;
+
+    private string Message => Environment.GetEnvironmentVariable("BLAZOR_MESSAGE")
+        ?? "Hello from minikube Blazor Server.";
+
+    private void Increment()
+    {
+        count++;
+    }
+}
