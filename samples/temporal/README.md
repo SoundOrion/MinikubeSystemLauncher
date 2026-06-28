@@ -172,3 +172,16 @@ cd samples\temporal
 ```
 
 PostgreSQL の PVC は、誤削除を避けるため自動では消しません。完全に消したい場合は、スクリプト表示に従って PVC を削除してください。
+
+## kubeconfig
+
+このフォルダの PowerShell サンプルは、既定で `..\..\..\.kube\config` を `KUBECONFIG` に設定してから `kubectl` / `helm` を実行します。
+
+別の kubeconfig を使う場合は `-KubeConfig` を指定してください。
+
+```powershell
+.\port-forward-blazor.ps1 -KubeConfig "C:\Users\Hatsuyama\Desktop\k8s\.kube\config"
+```
+
+`https://127.0.0.1:6443` に接続しようとして失敗する場合は、古い kubeconfig を参照している可能性があります。`SystemMinikubeHost` の `3. kubeconfig 出力のみ` を実行してから再試行してください。
+

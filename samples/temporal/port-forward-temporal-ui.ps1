@@ -1,9 +1,13 @@
 param(
     [string]$Namespace = "temporal",
-    [int]$LocalPort = 8080
-)
+    [int]$LocalPort = 8080,
+    [string]$KubeConfig = "")
 
 $ErrorActionPreference = "Stop"
+
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+Set-SampleKubeConfig -KubeConfig $KubeConfig
 
 Write-Host "Temporal Web UI:" -ForegroundColor Cyan
 Write-Host "  http://localhost:$LocalPort"

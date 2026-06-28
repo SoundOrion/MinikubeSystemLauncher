@@ -1,10 +1,14 @@
 param(
     [string]$Namespace = "temporal",
     [string]$PostgresRelease = "temporal-postgresql",
-    [string]$TemporalRelease = "temporal"
-)
+    [string]$TemporalRelease = "temporal",
+    [string]$KubeConfig = "")
 
 $ErrorActionPreference = "Stop"
+
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+Set-SampleKubeConfig -KubeConfig $KubeConfig
 
 Push-Location $PSScriptRoot
 try {

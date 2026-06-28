@@ -1,9 +1,13 @@
 param(
     [string]$Namespace = "temporal",
-    [int]$LocalPort = 7233
-)
+    [int]$LocalPort = 7233,
+    [string]$KubeConfig = "")
 
 $ErrorActionPreference = "Stop"
+
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+Set-SampleKubeConfig -KubeConfig $KubeConfig
 
 Write-Host "Temporal frontend gRPC:" -ForegroundColor Cyan
 Write-Host "  localhost:$LocalPort"

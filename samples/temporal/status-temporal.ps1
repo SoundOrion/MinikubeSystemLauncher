@@ -1,8 +1,12 @@
 param(
-    [string]$Namespace = "temporal"
-)
+    [string]$Namespace = "temporal",
+    [string]$KubeConfig = "")
 
 $ErrorActionPreference = "Stop"
+
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+Set-SampleKubeConfig -KubeConfig $KubeConfig
 
 Write-Host "Pods" -ForegroundColor Cyan
 kubectl get pods -n $Namespace -o wide

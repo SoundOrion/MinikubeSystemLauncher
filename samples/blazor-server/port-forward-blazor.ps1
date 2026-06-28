@@ -1,9 +1,13 @@
 param(
     [string]$KubectlExe = "kubectl",
-    [string]$LocalPort = "8080"
-)
+    [string]$LocalPort = "8080",
+    [string]$KubeConfig = "")
 
 $ErrorActionPreference = "Stop"
+
+$commonKubeEnv = Join-Path $PSScriptRoot "..\common\kube-env.ps1"
+. $commonKubeEnv
+Set-SampleKubeConfig -KubeConfig $KubeConfig
 
 Write-Host "Open this URL in your browser:" -ForegroundColor Cyan
 Write-Host "  http://localhost:$LocalPort"
