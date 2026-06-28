@@ -101,6 +101,20 @@ C# アプリのコンテナは、最終的に Pod の中で動きます。
 Web API や Blazor Server のように、常駐して動き続けるアプリを管理するためのリソースです。
 Pod が落ちた場合に作り直したり、replica 数を増やしたりできます。
 
+常駐 Worker も Deployment で動かすことが多いです。
+Web API と違い、外部から HTTP で呼ばれない Worker では Service が不要な場合があります。
+
+### 常駐 Worker
+
+キュー、DB、Temporal、Redis、RabbitMQ、Azure Service Bus などを見に行き、処理を待ち続けるアプリです。
+.NET 8 では Worker Service テンプレートや `BackgroundService` で作ると分かりやすいです。
+
+```cmd
+dotnet new worker -n SampleWorker
+```
+
+Kubernetes 上では、Job ではなく Deployment として常駐させます。
+
 ### Service
 
 Pod に安定したアクセス先を与えるためのリソースです。
@@ -153,14 +167,15 @@ Step 1. minikube を起動する
 Step 2. kubectl で node / pod / service を確認する
 Step 3. C# コンソールアプリを Job として動かす
 Step 4. C# Web API または Blazor Server を Deployment として動かす
-Step 5. Service と port-forward でアクセスする
-Step 6. ConfigMap / Secret で環境変数を渡す
-Step 7. Ingress で名前付きアクセスを試す
-Step 8. PostgreSQL + PVC で永続化を試す
-Step 9. Job / CronJob でバッチやDBマイグレーションを試す
-Step 10. Helm で YAML 管理を整理する
-Step 11. k9s / Dashboard で状態確認を楽にする
-Step 12. Temporal / KEDA などの応用へ進む
+Step 5. C# 常駐 Worker を Deployment として動かす
+Step 6. Service と port-forward でアクセスする
+Step 7. ConfigMap / Secret で環境変数を渡す
+Step 8. Ingress で名前付きアクセスを試す
+Step 9. PostgreSQL + PVC で永続化を試す
+Step 10. Job / CronJob でバッチやDBマイグレーションを試す
+Step 11. Helm で YAML 管理を整理する
+Step 12. k9s / Dashboard で状態確認を楽にする
+Step 13. Temporal / KEDA などの応用へ進む
 ```
 
 ---
@@ -486,6 +501,113 @@ kubectl port-forward svc/sample-web 8080:80
 ```text
 http://localhost:8080
 ```
+
+### 常駐 Worker の場合
+
+常駐 Worker は Web API とかなり同じノリで動かせます。
+違いは、外部から HTTP で呼ばれるアプリではないため、基本的には Service が不要なことです。
+
+```text
+Web API / Blazor Server
+  Deployment
+  Service
+  port-forward / Ingress
+  ブラウザ / curl / Postman からアクセス
+
+常駐 Worker
+  Deployment
+  Service は基本不要
+  Queue / DB / Temporal / Redis / RabbitMQ / Azure Service Bus などへ接続
+  kubectl logs で処理状況を確認
+```
+
+.NET 8 なら Worker Service テンプレートが分かりやすいです。
+
+```cmd
+dotnet new worker -n SampleWorker
+```
+
+`BackgroundService` で常駐処理を書きます。
+
+```csharp
+public sealed class Worker : BackgroundService
+{
+    private readonly ILogger<Worker> _logger;
+
+    public Worker(ILogger<Worker> logger)
+    {
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Worker running at: {Time}", DateTimeOffset.Now);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        }
+    }
+}
+```
+
+Deployment の例です。
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-worker
+  template:
+    metadata:
+      labels:
+        app: sample-worker
+    spec:
+      containers:
+        - name: sample-worker
+          image: sample-worker:dev
+          imagePullPolicy: Never
+          env:
+            - name: DOTNET_ENVIRONMENT
+              value: Development
+            - name: WORKER_NAME
+              value: sample-worker
+```
+
+確認は logs / describe を使います。
+
+```cmd
+kubectl get pods
+kubectl logs -l app=sample-worker -f
+kubectl describe pod -l app=sample-worker
+```
+
+使い分けは次の通りです。
+
+```text
+Job
+  一回実行して終了する処理
+  例: DBマイグレーション、単発バッチ、CSV取り込み
+
+CronJob
+  定期実行する処理
+  例: 夜間バッチ、定期集計、定期クリーンアップ
+
+Deployment + Worker
+  常駐して処理を待ち続ける
+  例: キュー処理、Temporal Worker、メッセージ処理
+
+Deployment + Service
+  HTTP で外から呼ばれる
+  例: Web API、Blazor Server、MVC
+```
+
+Temporal Worker もこの分類です。
+`TEMPORAL_ADDRESS` や `TASK_QUEUE` を ConfigMap / Secret / 環境変数で渡し、Deployment として常駐させます。
 
 ---
 
@@ -1040,28 +1162,31 @@ minikube delete --profile=minikube
 03-blazor-server
   Blazor Server を Deployment + Service + port-forward で表示
 
-04-config-secret
+04-worker
+  .NET Worker Service を Deployment として常駐実行
+
+05-config-secret
   ConfigMap / Secret を環境変数として渡す
 
-05-ingress
+06-ingress
   sample.local で Web API / Blazor にアクセス
 
-06-postgres
+07-postgres
   PostgreSQL + PVC を作る
 
-07-db-migration-job
+08-db-migration-job
   C# コンソールアプリで DB マイグレーションを実行
 
-08-cronjob
+09-cronjob
   C# コンソールアプリを定期実行
 
-09-helm-chart
-  Web API / Blazor / ConfigMap / Service / Ingress を Helm 化
+10-helm-chart
+  Web API / Blazor / Worker / ConfigMap / Service / Ingress を Helm 化
 
-10-temporal
+11-temporal
   Temporal Server + C# Worker
 
-11-keda
+12-keda
   Worker をイベントに応じてスケール
 ```
 
@@ -1151,6 +1276,7 @@ kubectl で状態を見る
 YAML を apply / delete する
 Pod の logs / describe を見る
 Job と Deployment の違いを理解する
+常駐 Worker は Deployment、単発処理は Job として考える
 Service と port-forward でアクセスする
 ConfigMap / Secret で設定を渡す
 Ingress / PVC / Helm に進む
